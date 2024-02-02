@@ -27,14 +27,6 @@ function App() {
     socket.emit("send_message", { message, room, username });
   };
 
-  // useEffect(() => {
-  //   socket.on("receive_message", (data) => {
-  //     if (data.username === username) {
-  //       setMessages((prevMessages) => [...prevMessages, data]);
-  //     }
-  //   });
-  // }, [socket, username]);
-
   useEffect(() => {
     const handleReceiveMessage = (data) => {
       setMessages((prevMessages) => [...prevMessages, data]);
@@ -43,7 +35,6 @@ function App() {
     socket.on("receive_message", handleReceiveMessage);
 
     return () => {
-      // Cleanup function to remove the event listener when the component is unmounted
       socket.off("receive_message", handleReceiveMessage);
     };
   }, [socket]);
