@@ -198,7 +198,7 @@ function App() {
               }}
             >
               {msg.username !== username && (
-                <Box sx={{ mr: 2, position: "relative" }}>
+                <Box sx={{ position: "relative" }}>
                   <Avatar
                     sx={{
                       backgroundColor:
@@ -227,14 +227,20 @@ function App() {
                 sx={{
                   borderRadius: 2,
                   p: "6px 12px",
-                  mr: 1,
+                  mx: 2,
                   backgroundColor:
                     msg.username === username ? "#e3f2fd" : "#fce4ec",
+
+                  maxWidth: "300px",
                 }}
               >
-                <Typography variant="body1">{`${
-                  msg.message || ""
-                }`}</Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    overflowWrap: "break-word",
+                    whiteSpace: "pre-wrap",
+                  }}
+                >{`${msg.message || ""}`}</Typography>
               </Box>
 
               {msg.username === username && (
