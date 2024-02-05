@@ -9,6 +9,7 @@ import {
   Container,
 } from "@mui/material";
 import { IoCheckmark, IoCheckmarkDone, IoSend } from "react-icons/io5";
+import moment from "moment";
 
 const socket = io.connect("http://localhost:3001");
 
@@ -35,11 +36,13 @@ function App() {
 
   const sendMessage = () => {
     const newMessageIndex = messages.length;
+    const timestamp = moment().format("hh:mm A");
     socket.emit("send_message", {
       message,
       room,
       username,
       index: newMessageIndex,
+      timestamp,
     });
   };
 
@@ -94,188 +97,223 @@ function App() {
   return (
     <Container
       maxWidth="md"
-      sx={{ my: 2, paddingLeft: "0 !important", paddingRight: "0 !important" }}
+      sx={{
+        my: 2,
+        paddingLeft: "0 !important",
+        paddingRight: "0 !important",
+      }}
     >
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        mt={4}
-        p={3}
-        bgcolor="#f5f5f5"
-        borderRadius={2}
-      >
-        <Typography variant="h5" mb={2} color="black">
-          Chat WebApp
-        </Typography>
-        <TextField
-          fullWidth
-          type="text"
-          variant="outlined"
-          placeholder="Your Name..."
-          onChange={(event) => {
-            setUsername(event.target.value);
-          }}
-        />
+      <Box m={2}>
         <Box
           sx={{
+            mt: 2,
+            p: 2,
             display: "flex",
-            alignItems: "center",
-            gap: 1,
-            width: "100%",
-            flexDirection: {
-              md: "row",
-              xs: "column",
-            },
+            flexDirection: "column",
+            backgroundColor: "#f5f5f5",
+            boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+            borderRadius: "8px",
           }}
         >
+          <Typography variant="h5" mb={2} color="black">
+            Chat WebApp
+          </Typography>
+          <TextField
+            fullWidth
+            type="text"
+            variant="outlined"
+            placeholder="Your Name..."
+            onChange={(event) => {
+              setUsername(event.target.value);
+            }}
+          />
           <Box
-            display="flex"
-            flexDirection="column"
-            gap={2}
-            mt={2}
-            sx={{ width: { md: "50%", xs: "100%" } }}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              width: "100%",
+              flexDirection: {
+                md: "row",
+                xs: "column",
+              },
+            }}
           >
-            <TextField
-              variant="outlined"
-              placeholder="Room Number..."
-              onChange={(event) => {
-                setRoom(event.target.value);
-              }}
-            />
-            <Button onClick={joinRoom} variant="contained" color="primary">
-              Join Room
-            </Button>
-          </Box>
-          <Box
-            display="flex"
-            flexDirection="column"
-            gap={2}
-            mt={2}
-            sx={{ width: { md: "50%", xs: "100%" } }}
-          >
-            <TextField
-              type="text"
-              variant="outlined"
-              placeholder="Message..."
-              onKeyPress={(event) => {
-                if (event.key === "Enter") {
-                  sendMessage();
-                }
-              }}
-              onChange={(event) => {
-                setMessage(event.target.value);
-              }}
-            />
-            <Button onClick={sendMessage} variant="contained" color="secondary">
-              Send Message <IoSend style={{ marginLeft: 6 }} fontSize={18} />
-            </Button>
+            <Box
+              display="flex"
+              flexDirection="column"
+              gap={2}
+              mt={2}
+              sx={{ width: { md: "50%", xs: "100%" } }}
+            >
+              <TextField
+                variant="outlined"
+                placeholder="Room Number..."
+                onChange={(event) => {
+                  setRoom(event.target.value);
+                }}
+              />
+              <Button onClick={joinRoom} variant="contained" color="primary">
+                Join Room
+              </Button>
+            </Box>
+            <Box
+              display="flex"
+              flexDirection="column"
+              gap={2}
+              mt={2}
+              sx={{ width: { md: "50%", xs: "100%" } }}
+            >
+              <TextField
+                type="text"
+                variant="outlined"
+                placeholder="Message..."
+                onKeyPress={(event) => {
+                  if (event.key === "Enter") {
+                    sendMessage();
+                  }
+                }}
+                onChange={(event) => {
+                  setMessage(event.target.value);
+                }}
+              />
+              <Button
+                onClick={sendMessage}
+                variant="contained"
+                color="secondary"
+              >
+                Send Message <IoSend style={{ marginLeft: 6 }} fontSize={18} />
+              </Button>
+            </Box>
           </Box>
         </Box>
-      </Box>
 
-      <Container
-        maxWidth="sm"
-        sx={{
-          mt: 4,
-          paddingLeft: "0 !important",
-          paddingRight: "0 !important",
-        }}
-      >
-        <Typography variant="h5" textAlign="center">
-          Messages:
-        </Typography>
-        <Box mt={2}>
-          {messages.map((msg, index) => (
-            <Box
-              key={index}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent:
-                  msg.username === username ? "flex-end" : "flex-start",
-                marginTop: "10px",
-              }}
-            >
-              {msg.username !== username && (
-                <Box sx={{ position: "relative" }}>
-                  <Avatar
+        <Container
+          maxWidth="sm"
+          sx={{
+            mt: 4,
+            paddingLeft: "0 !important",
+            paddingRight: "0 !important",
+          }}
+        >
+          <Typography variant="h5" textAlign="center">
+            Messages:
+          </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              p: 2,
+              height: "380px",
+              overflowY: "auto",
+              backgroundColor: "#f5f5f5",
+              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+              borderRadius: "8px",
+            }}
+          >
+            <Box>
+              {messages.map((msg, index) => (
+                <Box
+                  key={index}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent:
+                      msg.username === username ? "flex-end" : "flex-start",
+                    marginTop: "10px",
+                  }}
+                >
+                  {msg.username !== username && (
+                    <Box sx={{ position: "relative" }}>
+                      <Avatar
+                        sx={{
+                          backgroundColor:
+                            msg.username === username ? "#f50057" : "#3f51b5",
+                        }}
+                      >
+                        {msg.username ? msg.username[0].toUpperCase() : ""}
+                      </Avatar>
+                      {onlineUsers[msg.username] && (
+                        <span
+                          style={{
+                            backgroundColor: onlineUsers[msg.username].color,
+                            width: "10px",
+                            height: "10px",
+                            borderRadius: "50%",
+                            position: "absolute",
+                            bottom: "0",
+                            right: "0",
+                          }}
+                        ></span>
+                      )}
+                    </Box>
+                  )}
+
+                  <Box
                     sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      borderRadius: 2,
+                      p: "6px 12px",
+                      mx: 2,
                       backgroundColor:
-                        msg.username === username ? "#f50057" : "#3f51b5",
+                        msg.username === username ? "#e3f2fd" : "#fce4ec",
+                      maxWidth: "300px",
                     }}
                   >
-                    {msg.username ? msg.username[0] : ""}
-                  </Avatar>
-                  {onlineUsers[msg.username] && (
-                    <span
-                      style={{
-                        backgroundColor: onlineUsers[msg.username].color,
-                        width: "10px",
-                        height: "10px",
-                        borderRadius: "50%",
-                        position: "absolute",
-                        bottom: "0",
-                        right: "0",
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        overflowWrap: "break-word",
+                        whiteSpace: "pre-wrap",
                       }}
-                    ></span>
+                    >{`${msg.message || ""}`}</Typography>
+                    <Typography
+                      variant="caption"
+                      color="textSecondary"
+                      sx={{
+                        ml: 2,
+                        fontSize: "10px",
+                      }}
+                    >
+                      {msg.timestamp}
+                    </Typography>
+                  </Box>
+
+                  {msg.username === username && (
+                    <Avatar
+                      sx={{
+                        backgroundColor:
+                          msg.username === username ? "#f50057" : "#3f51b5",
+                      }}
+                    >
+                      {msg.username ? msg.username[0].toUpperCase() : ""}
+                    </Avatar>
+                  )}
+
+                  {msg.username === username && (
+                    <Box
+                      sx={{
+                        ml: 1,
+                        display: "flex",
+                        alignItems: "end",
+                        color: messagesReadByRecipient.includes(index)
+                          ? "#00FF00"
+                          : "#808080",
+                      }}
+                    >
+                      {messagesReadByRecipient.includes(index) ? (
+                        <IoCheckmarkDone fontSize={16} />
+                      ) : (
+                        <IoCheckmark fontSize={16} />
+                      )}
+                    </Box>
                   )}
                 </Box>
-              )}
-
-              <Box
-                sx={{
-                  borderRadius: 2,
-                  p: "6px 12px",
-                  mx: 2,
-                  backgroundColor:
-                    msg.username === username ? "#e3f2fd" : "#fce4ec",
-
-                  maxWidth: "300px",
-                }}
-              >
-                <Typography
-                  variant="body1"
-                  sx={{
-                    overflowWrap: "break-word",
-                    whiteSpace: "pre-wrap",
-                  }}
-                >{`${msg.message || ""}`}</Typography>
-              </Box>
-
-              {msg.username === username && (
-                <Avatar
-                  sx={{
-                    backgroundColor:
-                      msg.username === username ? "#f50057" : "#3f51b5",
-                  }}
-                >
-                  {msg.username ? msg.username[0] : ""}
-                </Avatar>
-              )}
-
-              {msg.username === username && (
-                <Box
-                  sx={{
-                    ml: 1,
-                    display: "flex",
-                    alignItems: "end",
-                    color: messagesReadByRecipient.includes(index)
-                      ? "#00FF00"
-                      : "#808080",
-                  }}
-                >
-                  {messagesReadByRecipient.includes(index) ? (
-                    <IoCheckmarkDone fontSize={16} />
-                  ) : (
-                    <IoCheckmark fontSize={16} />
-                  )}
-                </Box>
-              )}
+              ))}
             </Box>
-          ))}
-        </Box>
-      </Container>
+          </Box>
+        </Container>
+      </Box>
     </Container>
   );
 }

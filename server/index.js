@@ -34,7 +34,6 @@ io.on("connection", (socket) => {
 
   socket.on("send_message", (data) => {
     io.to(data.room).emit("receive_message", data);
-
     io.emit("user_online", { username: onlineUsers[socket.id] });
   });
 
