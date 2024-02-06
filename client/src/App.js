@@ -124,7 +124,7 @@ function App() {
             borderRadius: "8px",
           }}
         >
-          <Typography variant="h5" mb={2} color="teal" fontWeight="600">
+          <Typography variant="h4" mb={2} color="teal" fontWeight="500">
             CypherTalk
           </Typography>
           <Box
