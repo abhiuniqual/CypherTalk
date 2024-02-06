@@ -16,6 +16,7 @@ const io = new Server(server, {
 
 const joinedUsers = [];
 const onlineUsers = {};
+const agoraAppId = "7a61a1b97fae40aa8a4f273727be30d5";
 
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
@@ -64,6 +65,19 @@ io.on("connection", (socket) => {
     if (username) {
       delete onlineUsers[socket.id];
       io.emit("user_offline", { username });
+    }
+  });
+
+  socket.on("join_agora_channel", async (room) => {
+    const uid = socket.id;
+    const agoraChannel = agoraClient.createChannel(agoraAppId);
+    await agoraChannel.join(agoraAppId, room, null, uid);
+    socket.agoraChannel = agoraChannel;
+  });
+
+  socket.on("leave_agora_channel", async () => {
+    if (socket.agoraChannel) {
+      await socket.agoraChannel.leave();
     }
   });
 });

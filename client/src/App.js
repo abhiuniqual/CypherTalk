@@ -13,6 +13,7 @@ import { IoCheckmark, IoCheckmarkDone, IoSend, IoClose } from "react-icons/io5";
 import OnlineIcon from "../src/assets/onlineIcon.png";
 import moment from "moment";
 import "./App.css";
+// import AgoraRTC from "agora-rtc-sdk-ng  ";
 
 const socket = io.connect("http://localhost:3001");
 
@@ -25,6 +26,55 @@ function App() {
   const [readReceipts, setReadReceipts] = useState({});
   const [messagesReadByRecipient, setMessagesReadByRecipient] = useState([]);
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
+  // const [agoraChannel, setAgoraChannel] = useState(null);
+
+  // const initializeAgora = async () => {
+  //   const appId = "7a61a1b97fae40aa8a4f273727be30d5";
+  //   const client = AgoraRTC.createClient({ mode: "rtc", codec: "h264" });
+  //   client.init(appId, () => {
+  //     const channel = client.createChannel(room);
+  //     setAgoraChannel(channel);
+  //   });
+  // };
+
+  // const startCall = () => {
+  //   if (agoraChannel) {
+  //     agoraChannel.join(
+  //       null,
+  //       (uid) => {
+  //         console.log("Joined Agora channel with UID:", uid);
+  //       },
+  //       (err) => {
+  //         console.error("Failed to join Agora channel:", err);
+  //       }
+  //     );
+  //   }
+  // };
+
+  // const endCall = () => {
+  //   if (agoraChannel) {
+  //     agoraChannel.leave(
+  //       () => {
+  //         console.log("Left Agora channel");
+  //       },
+  //       (err) => {
+  //         console.error("Error leaving Agora channel:", err);
+  //       }
+  //     );
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (hasJoinedRoom) {
+  //     initializeAgora();
+  //   }
+
+  //   return () => {
+  //     if (agoraChannel) {
+  //       agoraChannel.leave();
+  //     }
+  //   };
+  // }, [hasJoinedRoom]);
 
   const markMessageAsRead = (index) => {
     const updatedReadReceipts = { ...readReceipts };
@@ -364,6 +414,17 @@ function App() {
             Join a room and start chatting!
           </Typography>
         )}
+
+        {/* {hasJoinedRoom && (
+          <Box mt={2}>
+            <Button onClick={startCall} variant="contained" color="primary">
+              Start Call
+            </Button>
+            <Button onClick={endCall} variant="contained" color="secondary">
+              End Call
+            </Button>
+          </Box>
+        )} */}
       </Box>
     </Container>
   );
