@@ -7,10 +7,12 @@ import {
   Button,
   Avatar,
   Container,
+  IconButton,
 } from "@mui/material";
 import { IoCheckmark, IoCheckmarkDone, IoSend, IoClose } from "react-icons/io5";
 import OnlineIcon from "../src/assets/onlineIcon.png";
 import moment from "moment";
+import "./App.css";
 
 const socket = io.connect("http://localhost:3001");
 
@@ -19,7 +21,6 @@ function App() {
   const [room, setRoom] = useState("");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
-  // const [visibleMessages, setVisibleMessages] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState({});
   const [readReceipts, setReadReceipts] = useState({});
   const [messagesReadByRecipient, setMessagesReadByRecipient] = useState([]);
@@ -49,28 +50,8 @@ function App() {
       index: newMessageIndex,
       timestamp,
     });
+    messageInputRef.current.value = "";
   };
-
-  // const handleScroll = () => {
-  //   const container = messagesContainerRef.current;
-  //   const containerRect = container.getBoundingClientRect();
-  //   const messageElements = container.getElementsByClassName("message");
-
-  //   const visibleIndices = [];
-
-  //   Array.from(messageElements).forEach((element, index) => {
-  //     const elementRect = element.getBoundingClientRect();
-
-  //     if (
-  //       elementRect.top >= containerRect.top &&
-  //       elementRect.bottom <= containerRect.bottom
-  //     ) {
-  //       visibleIndices.push(index);
-  //     }
-  //   });
-
-  //   setVisibleMessages(visibleIndices);
-  // };
 
   useEffect(() => {
     socket.on("user_online", (data) => {
@@ -120,11 +101,11 @@ function App() {
     };
   }, [socket, messages, room]);
 
-  // const messagesContainerRef = useRef(null);
+  const messageInputRef = useRef(null);
 
   return (
     <Container
-      maxWidth="md"
+      maxWidth="lg"
       sx={{
         my: 2,
         paddingLeft: "0 !important",
@@ -143,8 +124,8 @@ function App() {
             borderRadius: "8px",
           }}
         >
-          <Typography variant="h5" mb={2} color="primary">
-            Chat WebApp
+          <Typography variant="h5" mb={2} color="teal" fontWeight="600">
+            CypherTalk
           </Typography>
           <Box
             display="flex"
@@ -172,7 +153,7 @@ function App() {
             <Button
               onClick={joinRoom}
               variant="contained"
-              color="primary"
+              color="success"
               sx={{
                 width: {
                   md: "50%",
@@ -187,8 +168,6 @@ function App() {
 
         {hasJoinedRoom ? (
           <Container
-            // ref={messagesContainerRef}
-            // onScroll={handleScroll}
             maxWidth="md"
             sx={{
               mt: 4,
@@ -196,12 +175,8 @@ function App() {
               paddingRight: "0 !important",
             }}
           >
-            {/* <Typography variant="h5" textAlign="center">
-              Messages:
-            </Typography> */}
             <Box
               sx={{
-                // mt: 2,
                 p: 2,
                 height: "450px",
                 overflowY: "auto",
@@ -218,13 +193,16 @@ function App() {
                   justifyContent: "space-between",
                   alignItems: "center",
                   gap: 1,
+                  pb: 1,
+                  borderBottom: 1,
+                  borderColor: "#60A5FA",
                 }}
               >
                 <Box display="flex" alignItems="center">
                   <img
                     src={OnlineIcon}
                     alt="online"
-                    style={{ height: "14px", marginRight: 1 }}
+                    style={{ height: "14px", marginRight: 2 }}
                   />
                   <Typography variant="h6">{room}</Typography>
                 </Box>
@@ -235,17 +213,15 @@ function App() {
                     borderRadius: 2,
                     p: "6px 12px",
                     mx: 2,
-                    backgroundColor: "#e3f2fd",
+                    backgroundColor: "#D1FAE5",
                     maxWidth: "300px",
                   }}
                 >
-                  <Typography variant="body1">{`${username} welcome to the room ${room}`}</Typography>
+                  <Typography variant="body1">{`Hi ${username}, glad you're in room ${room}!`}</Typography>
                 </Box>
-                <IoClose
-                  size={22}
-                  style={{ cursor: "pointer" }}
-                  onClick={() => setHasJoinedRoom(false)}
-                />
+                <IconButton onClick={() => setHasJoinedRoom(false)}>
+                  <IoClose size={24} />
+                </IconButton>
               </Box>
               <Box
                 sx={{
@@ -254,15 +230,11 @@ function App() {
                   flexDirection: "column",
                   overflowY: "auto",
                   my: 1,
-                  borderTop: 1,
-                  borderColor: "#1976D2",
                 }}
               >
                 {messages.map((msg, index) => (
                   <Box
                     key={index}
-                    // data-index={index}
-                    // className="message"
                     sx={{
                       display: "flex",
                       alignItems: "center",
@@ -360,6 +332,7 @@ function App() {
                   </Box>
                 ))}
               </Box>
+
               <Box display="flex" gap={2} sx={{ width: "100%" }}>
                 <TextField
                   fullWidth
@@ -374,25 +347,21 @@ function App() {
                   onChange={(event) => {
                     setMessage(event.target.value);
                   }}
+                  inputRef={messageInputRef}
                 />
                 <Button
                   onClick={sendMessage}
                   variant="contained"
-                  color="secondary"
+                  color="success"
                 >
-                  <IoSend style={{ marginLeft: 6 }} fontSize={24} />
+                  <IoSend fontSize={24} />
                 </Button>
               </Box>
             </Box>
           </Container>
         ) : (
-          <Typography
-            my={2}
-            variant="h6"
-            color="textSecondary"
-            textAlign="center"
-          >
-            Join a room to start chatting.
+          <Typography my={2} variant="h6" color="teal" textAlign="center">
+            Join a room and start chatting!
           </Typography>
         )}
       </Box>
