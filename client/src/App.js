@@ -13,9 +13,17 @@ import { IoCheckmark, IoCheckmarkDone, IoSend, IoClose } from "react-icons/io5";
 import OnlineIcon from "../src/assets/onlineIcon.png";
 import moment from "moment";
 import "./App.css";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 // import AgoraRTC from "agora-rtc-sdk-ng  ";
 
 const socket = io.connect("http://localhost:3001");
+const validationSchema = Yup.object({
+  username: Yup.string().required("*Username is required"),
+  room: Yup.string()
+    .matches(/^\d+$/, "*Room number must contain only digits")
+    .required("*Room number is required"),
+});
 
 function App() {
   const [username, setUsername] = useState("");
@@ -76,18 +84,28 @@ function App() {
   //   };
   // }, [hasJoinedRoom]);
 
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+      room: "",
+    },
+    validationSchema: validationSchema,
+    onSubmit: (values) => {
+      joinRoom(values.username, values.room);
+    },
+  });
+
   const markMessageAsRead = (index) => {
     const updatedReadReceipts = { ...readReceipts };
     updatedReadReceipts[index] = true;
     setReadReceipts(updatedReadReceipts);
   };
 
-  const joinRoom = () => {
-    if (room !== "" && username !== "") {
+  const joinRoom = (username, room) => {
+    if (username && room) {
       socket.emit("join_room", { room, username });
+      setHasJoinedRoom(true);
     }
-
-    setHasJoinedRoom(true);
   };
 
   const sendMessage = () => {
@@ -95,8 +113,8 @@ function App() {
     const timestamp = moment().format("hh:mm A");
     socket.emit("send_message", {
       message,
-      room,
-      username,
+      room: formik.values.room,
+      username: formik.values.username,
       index: newMessageIndex,
       timestamp,
     });
@@ -149,7 +167,7 @@ function App() {
     return () => {
       socket.off("receive_message", handleReceiveMessage);
     };
-  }, [socket, messages, room]);
+  }, [socket, messages, formik.values.room]);
 
   const messageInputRef = useRef(null);
 
@@ -163,58 +181,75 @@ function App() {
       }}
     >
       <Box m={2}>
-        <Box
-          sx={{
-            mt: 2,
-            p: 2,
-            display: "flex",
-            flexDirection: "column",
-            backgroundColor: "#f5f5f5",
-            boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
-            borderRadius: "8px",
-          }}
-        >
-          <Typography variant="h4" mb={2} color="teal" fontWeight="500">
-            CypherTalk
-          </Typography>
+        <form onSubmit={formik.handleSubmit}>
           <Box
-            display="flex"
-            flexDirection={{ xs: "column", md: "row" }}
-            gap={2}
-            mt={2}
+            sx={{
+              mt: 2,
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              backgroundColor: "#f5f5f5",
+              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+              borderRadius: "8px",
+            }}
           >
-            <TextField
-              fullWidth
-              type="text"
-              variant="outlined"
-              placeholder="Your Name..."
-              onChange={(event) => {
-                setUsername(event.target.value);
-              }}
-            />
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Room Number..."
-              onChange={(event) => {
-                setRoom(event.target.value);
-              }}
-            />
-            <Button
-              onClick={joinRoom}
-              variant="contained"
-              color="success"
-              sx={{
-                width: {
-                  md: "50%",
-                  xs: "100%",
-                },
-              }}
+            <Typography variant="h4" mb={2} color="teal" fontWeight="500">
+              CypherTalk
+            </Typography>
+            <Box
+              display="flex"
+              flexDirection={{ xs: "column", md: "row" }}
+              gap={2}
+              mt={2}
             >
-              Join Room
-            </Button>
+              <TextField
+                fullWidth
+                type="text"
+                variant="outlined"
+                placeholder="Your Name..."
+                // onChange={(event) => {
+                //   setUsername(event.target.value);
+                // }}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.username}
+                name="username"
+                error={
+                  formik.touched.username && Boolean(formik.errors.username)
+                }
+                helperText={formik.touched.username && formik.errors.username}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Room Number..."
+                // onChange={(event) => {
+                //   setRoom(event.target.value);
+                // }}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                value={formik.values.room}
+                name="room"
+                error={formik.touched.room && Boolean(formik.errors.room)}
+                helperText={formik.touched.room && formik.errors.room}
+              />
+              <Button
+                type="submit"
+                onClick={joinRoom}
+                variant="contained"
+                color="success"
+                sx={{
+                  width: {
+                    md: "50%",
+                    xs: "100%",
+                  },
+                }}
+              >
+                Join Room
+              </Button>
+            </Box>
           </Box>
-        </Box>
+        </form>
 
         {hasJoinedRoom ? (
           <Container
@@ -267,7 +302,7 @@ function App() {
                     maxWidth: "300px",
                   }}
                 >
-                  <Typography variant="body1">{`Hi ${username}, glad you're in room ${room}!`}</Typography>
+                  <Typography variant="body1">{`Hi ${formik.values.username}, glad you're in room ${room}!`}</Typography>
                 </Box>
                 <IconButton onClick={() => setHasJoinedRoom(false)}>
                   <IoClose size={24} />
