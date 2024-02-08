@@ -9,14 +9,22 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3002",
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
   },
 });
 
 const joinedUsers = [];
 const onlineUsers = {};
-const agoraAppId = "7a61a1b97fae40aa8a4f273727be30d5";
+
+// const messagesByRoom = {};
+
+// function getExistingMessagesByRoom(room) {
+//   if (!messagesByRoom[room]) {
+//     return [];
+//   }
+//   return messagesByRoom[room];
+// }
 
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
@@ -32,6 +40,12 @@ io.on("connection", (socket) => {
     onlineUsers[socket.id] = data.username;
     io.emit("user_online", { username: data.username });
   });
+
+  // socket.on("get_existing_messages", (data) => {
+  //   const { room } = data;
+  //   const existingMessages = getExistingMessagesByRoom(room);
+  //   socket.emit("existing_messages", existingMessages);
+  // });
 
   socket.on("send_message", (data) => {
     io.to(data.room).emit("receive_message", data);
@@ -68,18 +82,9 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("join_agora_channel", async (room) => {
-    const uid = socket.id;
-    const agoraChannel = agoraClient.createChannel(agoraAppId);
-    await agoraChannel.join(agoraAppId, room, null, uid);
-    socket.agoraChannel = agoraChannel;
-  });
-
-  socket.on("leave_agora_channel", async () => {
-    if (socket.agoraChannel) {
-      await socket.agoraChannel.leave();
-    }
-  });
+  // socket.on("typing", (data) => {
+  //   socket.to(data.room).emit("user_typing", [data.username]);
+  // });
 });
 
 server.listen(3001, () => {

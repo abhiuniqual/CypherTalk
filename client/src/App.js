@@ -13,17 +13,10 @@ import { IoCheckmark, IoCheckmarkDone, IoSend, IoClose } from "react-icons/io5";
 import OnlineIcon from "../src/assets/onlineIcon.png";
 import moment from "moment";
 import "./App.css";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-// import AgoraRTC from "agora-rtc-sdk-ng  ";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const socket = io.connect("http://localhost:3001");
-const validationSchema = Yup.object({
-  username: Yup.string().required("*Username is required"),
-  room: Yup.string()
-    .matches(/^\d+$/, "*Room number must contain only digits")
-    .required("*Room number is required"),
-});
 
 function App() {
   const [username, setUsername] = useState("");
@@ -34,66 +27,7 @@ function App() {
   const [readReceipts, setReadReceipts] = useState({});
   const [messagesReadByRecipient, setMessagesReadByRecipient] = useState([]);
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
-  // const [agoraChannel, setAgoraChannel] = useState(null);
-
-  // const initializeAgora = async () => {
-  //   const appId = "7a61a1b97fae40aa8a4f273727be30d5";
-  //   const client = AgoraRTC.createClient({ mode: "rtc", codec: "h264" });
-  //   client.init(appId, () => {
-  //     const channel = client.createChannel(room);
-  //     setAgoraChannel(channel);
-  //   });
-  // };
-
-  // const startCall = () => {
-  //   if (agoraChannel) {
-  //     agoraChannel.join(
-  //       null,
-  //       (uid) => {
-  //         console.log("Joined Agora channel with UID:", uid);
-  //       },
-  //       (err) => {
-  //         console.error("Failed to join Agora channel:", err);
-  //       }
-  //     );
-  //   }
-  // };
-
-  // const endCall = () => {
-  //   if (agoraChannel) {
-  //     agoraChannel.leave(
-  //       () => {
-  //         console.log("Left Agora channel");
-  //       },
-  //       (err) => {
-  //         console.error("Error leaving Agora channel:", err);
-  //       }
-  //     );
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (hasJoinedRoom) {
-  //     initializeAgora();
-  //   }
-
-  //   return () => {
-  //     if (agoraChannel) {
-  //       agoraChannel.leave();
-  //     }
-  //   };
-  // }, [hasJoinedRoom]);
-
-  const formik = useFormik({
-    initialValues: {
-      username: "",
-      room: "",
-    },
-    validationSchema: validationSchema,
-    onSubmit: (values) => {
-      joinRoom(values.username, values.room);
-    },
-  });
+  // const [isTyping, setIsTyping] = useState(false);
 
   const markMessageAsRead = (index) => {
     const updatedReadReceipts = { ...readReceipts };
@@ -101,10 +35,23 @@ function App() {
     setReadReceipts(updatedReadReceipts);
   };
 
-  const joinRoom = (username, room) => {
-    if (username && room) {
+  const joinRoom = () => {
+    const nameRegex = /^[a-zA-Z\s]+$/;
+    const roomRegex = /^\d+$/;
+
+    if (
+      room !== "" &&
+      username !== "" &&
+      nameRegex.test(username) &&
+      roomRegex.test(room)
+    ) {
       socket.emit("join_room", { room, username });
       setHasJoinedRoom(true);
+      toast.success("You've joined the room successfully!");
+    } else {
+      toast.error(
+        "Name must contain only letters, and room number must contain only digits."
+      );
     }
   };
 
@@ -113,26 +60,36 @@ function App() {
     const timestamp = moment().format("hh:mm A");
     socket.emit("send_message", {
       message,
-      room: formik.values.room,
-      username: formik.values.username,
+      room,
+      username,
       index: newMessageIndex,
       timestamp,
     });
     messageInputRef.current.value = "";
   };
 
+  // const handleTyping = (event) => {
+  //   setMessage(event.target.value);
+  //   if (event.target.value !== "") {
+  //     socket.emit("typing", { room, username });
+  //     setIsTyping(true);
+  //   } else {
+  //     setIsTyping(false);
+  //   }
+  // };
+
   useEffect(() => {
     socket.on("user_online", (data) => {
       setOnlineUsers((prevUsers) => ({
         ...prevUsers,
-        [data.username]: { status: "online", color: "#00FF00" },
+        [data.username]: { status: "online", color: "#4CAF50" },
       }));
     });
 
     socket.on("user_offline", (data) => {
       setOnlineUsers((prevUsers) => ({
         ...prevUsers,
-        [data.username]: { status: "offline", color: "#FF0000" },
+        [data.username]: { status: "offline", color: "#F44336" },
       }));
     });
 
@@ -149,10 +106,21 @@ function App() {
       ]);
     });
 
+    // socket.on("existing_messages", (existingMessages) => {
+    //   setMessages(existingMessages);
+    // });
+
+    // socket.on("user_typing", (typingUsers) => {
+    //   const isUserTyping = typingUsers.some((user) => user !== username);
+    //   setIsTyping(isUserTyping);
+    // });
+
     return () => {
       socket.off("user_online");
       socket.off("user_offline");
       socket.off("message_read");
+      // socket.off("existing_messages");
+      // socket.off("user_typing");
     };
   }, [socket, onlineUsers, readReceipts]);
 
@@ -163,11 +131,12 @@ function App() {
     };
 
     socket.on("receive_message", handleReceiveMessage);
+    // socket.emit("get_existing_messages", { room });
 
     return () => {
       socket.off("receive_message", handleReceiveMessage);
     };
-  }, [socket, messages, formik.values.room]);
+  }, [socket, messages, room]);
 
   const messageInputRef = useRef(null);
 
@@ -180,76 +149,61 @@ function App() {
         paddingRight: "0 !important",
       }}
     >
+      <ToastContainer />
       <Box m={2}>
-        <form onSubmit={formik.handleSubmit}>
+        <Box
+          sx={{
+            mt: 2,
+            p: 2,
+            display: "flex",
+            flexDirection: "column",
+            backgroundColor: "#ECEFF1",
+            borderRadius: "8px",
+          }}
+        >
+          <Typography variant="h4" mb={2} color="#1565C0" fontWeight="500">
+            CypherTalk
+          </Typography>
           <Box
-            sx={{
-              mt: 2,
-              p: 2,
-              display: "flex",
-              flexDirection: "column",
-              backgroundColor: "#f5f5f5",
-              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
-              borderRadius: "8px",
-            }}
+            display="flex"
+            flexDirection={{ xs: "column", md: "row" }}
+            gap={2}
+            mt={2}
           >
-            <Typography variant="h4" mb={2} color="teal" fontWeight="500">
-              CypherTalk
-            </Typography>
-            <Box
-              display="flex"
-              flexDirection={{ xs: "column", md: "row" }}
-              gap={2}
-              mt={2}
+            <TextField
+              fullWidth
+              type="text"
+              variant="outlined"
+              placeholder="Your Name..."
+              value={username}
+              onChange={(event) => {
+                setUsername(event.target.value);
+              }}
+            />
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Room Number..."
+              value={room}
+              onChange={(event) => {
+                setRoom(event.target.value);
+              }}
+            />
+            <Button
+              onClick={joinRoom}
+              variant="contained"
+              color="primary"
+              sx={{
+                width: {
+                  md: "50%",
+                  xs: "100%",
+                },
+              }}
             >
-              <TextField
-                fullWidth
-                type="text"
-                variant="outlined"
-                placeholder="Your Name..."
-                // onChange={(event) => {
-                //   setUsername(event.target.value);
-                // }}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.username}
-                name="username"
-                error={
-                  formik.touched.username && Boolean(formik.errors.username)
-                }
-                helperText={formik.touched.username && formik.errors.username}
-              />
-              <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Room Number..."
-                // onChange={(event) => {
-                //   setRoom(event.target.value);
-                // }}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.room}
-                name="room"
-                error={formik.touched.room && Boolean(formik.errors.room)}
-                helperText={formik.touched.room && formik.errors.room}
-              />
-              <Button
-                type="submit"
-                onClick={joinRoom}
-                variant="contained"
-                color="success"
-                sx={{
-                  width: {
-                    md: "50%",
-                    xs: "100%",
-                  },
-                }}
-              >
-                Join Room
-              </Button>
-            </Box>
+              Join Room
+            </Button>
           </Box>
-        </form>
+        </Box>
 
         {hasJoinedRoom ? (
           <Container
@@ -265,8 +219,7 @@ function App() {
                 p: 2,
                 height: "450px",
                 overflowY: "auto",
-                backgroundColor: "#f5f5f5",
-                boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+                backgroundColor: "#ECEFF1",
                 borderRadius: "8px",
                 display: "flex",
                 flexDirection: "column",
@@ -280,7 +233,7 @@ function App() {
                   gap: 1,
                   pb: 1,
                   borderBottom: 1,
-                  borderColor: "#60A5FA",
+                  borderColor: "#90A4AE",
                 }}
               >
                 <Box display="flex" alignItems="center">
@@ -298,11 +251,11 @@ function App() {
                     borderRadius: 2,
                     p: "6px 12px",
                     mx: 2,
-                    backgroundColor: "#D1FAE5",
+                    backgroundColor: "#C8E6C9",
                     maxWidth: "300px",
                   }}
                 >
-                  <Typography variant="body1">{`Hi ${formik.values.username}, glad you're in room ${room}!`}</Typography>
+                  <Typography variant="body1">{`Hi ${username}, glad you're in room ${room}!`}</Typography>
                 </Box>
                 <IconButton onClick={() => setHasJoinedRoom(false)}>
                   <IoClose size={24} />
@@ -333,7 +286,7 @@ function App() {
                         <Avatar
                           sx={{
                             backgroundColor:
-                              msg.username === username ? "#f50057" : "#3f51b5",
+                              msg.username === username ? "#1976D2" : "#F44336",
                           }}
                         >
                           {msg.username ? msg.username[0].toUpperCase() : ""}
@@ -366,6 +319,11 @@ function App() {
                         maxWidth: "300px",
                       }}
                     >
+                      {/* {isTyping && (
+                        <Typography variant="body2" color="textSecondary">
+                          Someone is typing...
+                        </Typography>
+                      )} */}
                       <Typography
                         variant="body1"
                         sx={{
@@ -389,7 +347,7 @@ function App() {
                       <Avatar
                         sx={{
                           backgroundColor:
-                            msg.username === username ? "#f50057" : "#3f51b5",
+                            msg.username === username ? "#1976D2" : "#F44336",
                         }}
                       >
                         {msg.username ? msg.username[0].toUpperCase() : ""}
@@ -403,8 +361,8 @@ function App() {
                           display: "flex",
                           alignItems: "end",
                           color: messagesReadByRecipient.includes(index)
-                            ? "#00FF00"
-                            : "#808080",
+                            ? "#4CAF50"
+                            : "#9E9E9E",
                         }}
                       >
                         {messagesReadByRecipient.includes(index) ? (
@@ -429,6 +387,7 @@ function App() {
                       sendMessage();
                     }
                   }}
+                  // onChange={handleTyping}
                   onChange={(event) => {
                     setMessage(event.target.value);
                   }}
@@ -437,7 +396,7 @@ function App() {
                 <Button
                   onClick={sendMessage}
                   variant="contained"
-                  color="success"
+                  color="primary"
                 >
                   <IoSend fontSize={24} />
                 </Button>
@@ -445,21 +404,10 @@ function App() {
             </Box>
           </Container>
         ) : (
-          <Typography my={2} variant="h6" color="teal" textAlign="center">
+          <Typography my={2} variant="h6" color="#1565C0" textAlign="center">
             Join a room and start chatting!
           </Typography>
         )}
-
-        {/* {hasJoinedRoom && (
-          <Box mt={2}>
-            <Button onClick={startCall} variant="contained" color="primary">
-              Start Call
-            </Button>
-            <Button onClick={endCall} variant="contained" color="secondary">
-              End Call
-            </Button>
-          </Box>
-        )} */}
       </Box>
     </Container>
   );
