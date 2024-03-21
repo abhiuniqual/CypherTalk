@@ -8,8 +8,12 @@ import {
   Avatar,
   Container,
   IconButton,
+  Stack,
+  Popover,
 } from "@mui/material";
 import { IoCheckmark, IoCheckmarkDone, IoSend, IoClose } from "react-icons/io5";
+import { LuSmile } from "react-icons/lu";
+import EmojiPicker from "emoji-picker-react";
 import OnlineIcon from "../src/assets/onlineIcon.png";
 import moment from "moment";
 import "./App.css";
@@ -28,6 +32,16 @@ function App() {
   const [messagesReadByRecipient, setMessagesReadByRecipient] = useState([]);
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   // const [isTyping, setIsTyping] = useState(false);
+  const [anchorElForEmojiPicker, setAnchorElForEmojiPicker] = useState(null);
+  const openEmojiPicker = Boolean(anchorElForEmojiPicker);
+
+  const handleClickSmileyButton = (e) => {
+    setAnchorElForEmojiPicker(e.currentTarget);
+  };
+
+  const handleCloseEmojiPicker = () => {
+    setAnchorElForEmojiPicker(null);
+  };
 
   const markMessageAsRead = (index) => {
     const updatedReadReceipts = { ...readReceipts };
@@ -376,31 +390,79 @@ function App() {
                 ))}
               </Box>
 
-              <Box display="flex" gap={2} sx={{ width: "100%" }}>
+              <Stack
+                px="16px"
+                pb="16px"
+                pt="8px"
+                direction="row"
+                gap="15px"
+                alignItems="center"
+              >
+                <Popover
+                  anchorOrigin={{
+                    vertical: "top",
+                    horizontal: "center",
+                  }}
+                  transformOrigin={{
+                    vertical: "bottom",
+                    horizontal: "center",
+                  }}
+                  anchorEl={anchorElForEmojiPicker}
+                  onClose={handleCloseEmojiPicker}
+                  open={openEmojiPicker}
+                >
+                  <EmojiPicker
+                    style={{
+                      fontFamily: "Poppins, sans-serif !important",
+                    }}
+                    open={openEmojiPicker}
+                    lazyLoadEmojis
+                    onEmojiClick={(e) => {
+                      setMessage(message + e.emoji);
+                    }}
+                  />
+                </Popover>
                 <TextField
-                  fullWidth
+                  inputRef={messageInputRef}
+                  autoComplete="off"
                   type="text"
                   variant="outlined"
-                  placeholder="Type a message..."
+                  placeholder="Type message..."
+                  fullWidth
+                  name="message"
+                  sx={{
+                    ".MuiInputBase-root": {
+                      height: "54px",
+                      backgroundColor: "#FFFFFF",
+                    },
+                  }}
+                  onChange={(event) => {
+                    setMessage(event.target.value);
+                  }}
                   onKeyPress={(event) => {
                     if (event.key === "Enter") {
                       sendMessage();
                     }
                   }}
-                  // onChange={handleTyping}
-                  onChange={(event) => {
-                    setMessage(event.target.value);
+                  InputProps={{
+                    startAdornment: (
+                      <IconButton
+                        sx={{ ml: -1 }}
+                        onClick={(e) => handleClickSmileyButton(e)}
+                      >
+                        <LuSmile />
+                      </IconButton>
+                    ),
                   }}
-                  inputRef={messageInputRef}
                 />
                 <Button
-                  onClick={sendMessage}
                   variant="contained"
-                  color="primary"
+                  color="secondary"
+                  onClick={sendMessage}
                 >
                   <IoSend fontSize={24} />
                 </Button>
-              </Box>
+              </Stack>
             </Box>
           </Container>
         ) : (

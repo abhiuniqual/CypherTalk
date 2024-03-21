@@ -11,6 +11,7 @@
     "@testing-library/user-event": "^13.5.0",
     "agora-rtc-react": "^2.1.0",
     "agora-rtc-sdk-ng": "^4.20.0",
+    "emoji-picker-react": "^4.9.2",
     "formik": "^2.4.5",
     "moment": "^2.30.1",
     "react": "^18.2.0",
